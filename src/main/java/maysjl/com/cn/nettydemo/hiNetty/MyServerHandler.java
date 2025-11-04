@@ -33,9 +33,7 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
         System.out.println("链接报告完毕");
         // 通知客户端链接建立成功
         String str = "通知客户端链接建立成功" + " " + new Date() + " " + channel.localAddress().getHostString() + "\r\n";
-        ByteBuf buf = Unpooled.buffer(str.getBytes().length);
-        buf.writeBytes(str.getBytes("GBK"));
-        ctx.writeAndFlush(buf);
+        ctx.writeAndFlush(str);
     }
 
     /**
@@ -54,9 +52,7 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
         System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " 接收到消息：" + msg);
         // 通知客户端链接建立成功
         String str = "服务端收到： "+ new Date() + " " + msg + "\r\n";
-        ByteBuf buf = Unpooled.buffer(str.getBytes().length);
-        buf.writeBytes(str.getBytes("GBK"));
-        ctx.writeAndFlush(buf);
+        ctx.writeAndFlush(str);
     }
 
     /**
