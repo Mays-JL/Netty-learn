@@ -31,6 +31,7 @@ public class NettyServer {
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childHandler(new MyChannelInitializer());
             ChannelFuture f = b.bind(port).sync();
+            System.out.println("服务端启动成功");
             f.channel().closeFuture().sync();
         }catch (InterruptedException e){
             e.printStackTrace();
