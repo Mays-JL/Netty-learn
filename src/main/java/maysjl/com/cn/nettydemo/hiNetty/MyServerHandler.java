@@ -25,6 +25,9 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        //当有客户端链接时，将此客户端加入到channelGroup中，以便于群发消息
+        ChannelHandler.channelGroup.add(ctx.channel());
+        //日志信息
        io.netty.channel.socket.SocketChannel channel = (SocketChannel) ctx.channel();
         System.out.println("链接报告开始");
         System.out.println("链接报告信息：有一客户端链接到本服务端");
@@ -44,15 +47,17 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("客户端断开链接 " + ctx.channel().localAddress().toString());
+        //当有客户端退出后，从channelGroup中移除这个客户端
+        ChannelHandler.channelGroup.remove(ctx.channel());
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         //接收msg消息{与上一章节相比，此处已经不需要自己进行解码}
         System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " 接收到消息：" + msg);
-        // 通知客户端链接建立成功
+        // 收到消息后，转发给客户端
         String str = "服务端收到： "+ new Date() + " " + msg + "\r\n";
-        ctx.writeAndFlush(str);
+        ChannelHandler.channelGroup.writeAndFlush(str);
     }
 
     /**
