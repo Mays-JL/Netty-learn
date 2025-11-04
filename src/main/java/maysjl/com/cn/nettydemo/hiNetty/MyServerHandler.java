@@ -1,7 +1,5 @@
 package maysjl.com.cn.nettydemo.hiNetty;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.SocketChannel;
@@ -28,7 +26,7 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
         //当有客户端链接时，将此客户端加入到channelGroup中，以便于群发消息
         ChannelHandler.channelGroup.add(ctx.channel());
         //日志信息
-       io.netty.channel.socket.SocketChannel channel = (SocketChannel) ctx.channel();
+        SocketChannel channel = (SocketChannel) ctx.channel();
         System.out.println("链接报告开始");
         System.out.println("链接报告信息：有一客户端链接到本服务端");
         System.out.println("链接报告IP:" + channel.localAddress().getHostString());
