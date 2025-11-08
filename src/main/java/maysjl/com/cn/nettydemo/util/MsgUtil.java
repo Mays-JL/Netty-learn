@@ -1,6 +1,6 @@
 package maysjl.com.cn.nettydemo.util;
 
-import maysjl.com.cn.nettydemo.domain.MsgBody;
+import maysjl.com.cn.nettydemo.domain.MsgInfo;
 
 /**
  * @program: netty-demo
@@ -10,10 +10,7 @@ import maysjl.com.cn.nettydemo.domain.MsgBody;
  **/
 public class MsgUtil {
 
-    public static MsgBody buildMsg(String channelId, String msgInfo){
-        MsgBody.Builder msg = MsgBody.newBuilder();
-        msg.setChannelId(channelId);
-        msg.setMsgInfo(msgInfo);
-        return msg.build();
+    public static MsgInfo buildMsg(String channelId,String msgContent){
+        return new MsgInfo(channelId,msgContent);
     }
 }

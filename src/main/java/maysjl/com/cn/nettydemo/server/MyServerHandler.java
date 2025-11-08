@@ -1,10 +1,10 @@
 package maysjl.com.cn.nettydemo.server;
 
-import com.googlecode.protobuf.format.JsonFormat;
+
+import com.alibaba.fastjson.JSON;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.SocketChannel;
-import maysjl.com.cn.nettydemo.domain.MsgBody;
 import maysjl.com.cn.nettydemo.util.MsgUtil;
 
 import java.text.SimpleDateFormat;
@@ -42,7 +42,7 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " 接收到消息类型：" + msg.getClass());
-        System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " 接收到消息内容：" + JsonFormat.printToString((MsgBody) msg));
+        System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " 接收到消息内容：" + JSON.toJSONString(msg));
     }
 
     @Override
