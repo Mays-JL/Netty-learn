@@ -1,6 +1,5 @@
 package maysjl.com.cn.nettydemo;
 
-import com.googlecode.protobuf.format.JsonFormat;
 
 /**
  * @program: netty-demo
