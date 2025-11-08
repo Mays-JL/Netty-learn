@@ -19,48 +19,30 @@ import java.net.InetSocketAddress;
  * @author: May's_JL
  * @create: 2025-11-06 10:46
  **/
-@Component("nettyServer")
 public class NettyServer {
 
-    private Logger logger = LoggerFactory.getLogger(NettyServer.class);
+    public static void main(String[] args) {
+        new NettyServer().bing(7397);
+    }
 
-    //配置服务端NIO线程组
-    private final EventLoopGroup parentGroup = new NioEventLoopGroup();
-    private final EventLoopGroup childGroup = new NioEventLoopGroup();
-    private Channel channel;
-
-    public ChannelFuture bing(InetSocketAddress address){
-        ChannelFuture channelFuture = null;
+    public void bing(int port){
+        //配置服务端NIO线程组
+        EventLoopGroup parentGroup = new NioEventLoopGroup();
+        EventLoopGroup childGroup = new NioEventLoopGroup();
         try{
             ServerBootstrap b = new ServerBootstrap();
             b.group(parentGroup, childGroup)
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childHandler(new MyChannelInitializer());
-
-            channelFuture = b.bind(address).syncUninterruptibly();
-            channel = channelFuture.channel();
+            ChannelFuture f = b.bind(port).sync();
+            System.out.println("maysjl.com.cn server start done");
+            f.channel().closeFuture().sync();
         }catch (Exception e){
-            logger.error(e.getMessage());
+            e.printStackTrace();
         }finally {
-            if (null != channelFuture && channelFuture.isSuccess()) {
-                logger.info("maysjl.com.cn.nettydemo.server.NettyServer start done");
-            }else {
-                logger.error("maysjl.com.cn server start error");
-            }
+            childGroup.shutdownGracefully();
+            parentGroup.shutdownGracefully();
         }
-        return channelFuture;
-    }
-
-
-    public void destroy(){
-        if (null == channel) return;
-        channel.close();
-        parentGroup.shutdownGracefully();
-        childGroup.shutdownGracefully();
-    }
-
-    public Channel getChannel(){
-        return channel;
     }
 }

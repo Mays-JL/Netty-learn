@@ -1,17 +1,7 @@
 package maysjl.com.cn.nettydemo;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.LineBasedFrameDecoder;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
-
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.googlecode.protobuf.format.JsonFormat;
+import maysjl.com.cn.nettydemo.domain.MsgBody;
 
 /**
  * @program: netty-demo
@@ -20,49 +10,20 @@ import java.util.Date;
  * @create: 2025-11-06 11:11
  **/
 public class ApiTest {
-    public static void main(String[] args) {
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
-        try {
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup);
-            b.channel(NioSocketChannel.class);
-            b.option(ChannelOption.AUTO_READ, true);
-            b.handler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel channel) throws Exception {
-                    // 基于换行符号
-                    channel.pipeline().addLast(new LineBasedFrameDecoder(1024));
-                    // 解码转String，注意调整自己的编码格式GBK、UTF-8
-                    channel.pipeline().addLast(new StringDecoder(Charset.forName("GBK")));
-                    // 解码转String，注意调整自己的编码格式GBK、UTF-8
-                    channel.pipeline().addLast(new StringEncoder(Charset.forName("GBK")));
-                    // 在管道中添加我们自己的接收数据实现方法
-                    channel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-                        @Override
-                        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                            //接收msg消息{与上一章节相比，此处已经不需要自己进行解码}
-                            System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " 客户端接收到消息：" + msg);
-                        }
-                    });
-                }
-            });
-            ChannelFuture f = b.connect("127.0.0.1", 7397).sync();
-            System.out.println("maysjl.com.cn client start done.");
+    public static void main(String[] args) throws JsonFormat.ParseException {
+        MsgBody.Builder msg = MsgBody.newBuilder();
+        msg.setChannelId("abD01223");
+        msg.setMsgInfo("hi helloword");
+        MsgBody msgBody = msg.build();
 
-            //向服务端发送信息
-            f.channel().writeAndFlush("你好，SpringBoot启动的netty服务端，我是maysjl。“我的结尾是一个换行符，用于传输半包粘包处理”\r\n");
-            f.channel().writeAndFlush("你好，SpringBoot启动的netty服务端，我是maysjl。“我的结尾是一个换行符，用于传输半包粘包处理”\r\n");
-            f.channel().writeAndFlush("你好，SpringBoot启动的netty服务端，我是maysjl。“我的结尾是一个换行符，用于传输半包粘包处理”\r\n");
-            f.channel().writeAndFlush("你好，SpringBoot启动的netty服务端，我是maysjl。“我的结尾是一个换行符，用于传输半包粘包处理”\r\n");
-            f.channel().writeAndFlush("你好，SpringBoot启动的netty服务端，我是maysjl。“我的结尾是一个换行符，用于传输半包粘包处理”\r\n");
-            f.channel().writeAndFlush("你好，SpringBoot启动的netty服务端，我是maysjl。“我的结尾是一个换行符，用于传输半包粘包处理”\r\n");
+        // protobuf 转JSON 需要引入 protobuf-java-format
+        String msgBodyStr = JsonFormat.printToString(msgBody);
+        System.out.println(msgBodyStr);
 
-            f.channel().closeFuture().syncUninterruptibly();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            workerGroup.shutdownGracefully();
-
-        }
+        //json 转 protobuf 需要引入 protobuf-java-format
+        JsonFormat.merge("{\"channelId\": \"HBdhi993\",\"msgInfo\": \"hi maysjl.com.cn\"}", msg);
+        msgBody = msg.build();
+        System.out.println(msgBody.getChannelId());
+        System.out.println(msgBody.getMsgInfo());
     }
 }

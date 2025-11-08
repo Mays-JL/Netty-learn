@@ -27,8 +27,8 @@ public class NettyApplication implements CommandLineRunner {
     @Value("${netty.port}")
     private int port;
 
-    @Autowired
-    private NettyServer nettyServer;
+    //@Autowired
+    //private NettyServer nettyServer;
 
     public static void main(String[] args) {
         SpringApplication.run(NettyApplication.class, args);
@@ -36,9 +36,9 @@ public class NettyApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        InetSocketAddress address = new InetSocketAddress(host, port);
+       /* InetSocketAddress address = new InetSocketAddress(host, port);
         ChannelFuture channelFuture = nettyServer.bing(address);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> nettyServer.destroy()));
-        channelFuture.channel().closeFuture().syncUninterruptibly();
+        channelFuture.channel().closeFuture().syncUninterruptibly();*/
     }
 }
