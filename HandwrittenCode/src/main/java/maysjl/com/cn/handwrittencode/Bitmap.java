@@ -2,7 +2,7 @@ package maysjl.com.cn.handwrittencode;
 
 /**
  * @program: netty-demo
- * @description:
+ * @description: 手写一个bitmap https://www.yuque.com/stao0lin/aze9xt/af3e2few5vwlgrny
  * @author: May's_JL
  * @create: 2025-11-08 23:59
  **/
