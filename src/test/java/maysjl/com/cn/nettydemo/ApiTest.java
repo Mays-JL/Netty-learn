@@ -1,6 +1,11 @@
 package maysjl.com.cn.nettydemo;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.math.BigInteger;
+
 /**
  * @program: netty-demo
  * @description:
@@ -8,20 +13,30 @@ package maysjl.com.cn.nettydemo;
  * @create: 2025-11-06 11:11
  **/
 public class ApiTest {
-    public static void main(String[] args) throws JsonFormat.ParseException {
-        MsgBody.Builder msg = MsgBody.newBuilder();
-        msg.setChannelId("abD01223");
-        msg.setMsgInfo("hi helloword");
-        MsgBody msgBody = msg.build();
 
-        // protobuf 转JSON 需要引入 protobuf-java-format
-        String msgBodyStr = JsonFormat.printToString(msgBody);
-        System.out.println(msgBodyStr);
+    public static void main(String[] args) throws IOException {
+        test("C:\\Users\\fuzhengwei\\Desktop\\测试传输文件1.txt");
+        test("C:\\Users\\fuzhengwei\\Desktop\\netty-file.zip");
+    }
+    /**
+     * 读取文件与notepad++ 比对
+     *
+     * @param fileUrl
+     * @throws IOException
+     */
+    private static void test(String fileUrl) throws IOException {
+        File file = new File(fileUrl);
+        RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+        randomAccessFile.seek(0);
 
-        //json 转 protobuf 需要引入 protobuf-java-format
-        JsonFormat.merge("{\"channelId\": \"HBdhi993\",\"msgInfo\": \"hi maysjl.com.cn\"}", msg);
-        msgBody = msg.build();
-        System.out.println(msgBody.getChannelId());
-        System.out.println(msgBody.getMsgInfo());
+        byte[] bytes = new byte[1024];
+        int byteRead = randomAccessFile.read(bytes);
+
+        System.out.println(fileUrl);
+        System.out.println("读取文件长度：" + byteRead);
+        for (byte b : bytes) {
+            System.out.print(new BigInteger(1, new byte[]{b}).toString(16) + " ");
+        }
+        System.out.println("\r\n");
     }
 }

@@ -18,28 +18,39 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
  **/
 public class NettyServer {
 
-    public static void main(String[] args) {
-        new NettyServer().bing(7397);
-    }
-
-    public void bing(int port){
-        //配置服务端NIO线程组
-        EventLoopGroup parentGroup = new NioEventLoopGroup();
-        EventLoopGroup childGroup = new NioEventLoopGroup();
+    private EventLoopGroup parentGroup = new NioEventLoopGroup();
+    private EventLoopGroup childGroup = new NioEventLoopGroup();
+    private Channel channel;
+    public ChannelFuture bing(int port){
+        ChannelFuture channelFuture = null;
         try{
             ServerBootstrap b = new ServerBootstrap();
             b.group(parentGroup, childGroup)
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childHandler(new MyChannelInitializer());
-            ChannelFuture f = b.bind(port).sync();
-            System.out.println("maysjl.com.cn server start done");
-            f.channel().closeFuture().sync();
+            channelFuture = b.bind(port).syncUninterruptibly();
+            this.channel = channelFuture.channel();
         }catch (Exception e){
             e.printStackTrace();
         }finally {
-            childGroup.shutdownGracefully();
-            parentGroup.shutdownGracefully();
+            if (null != channelFuture && channelFuture.isSuccess()) {
+                System.out.println("maysjl server start done. ");
+            } else {
+                System.out.println("maysjl server start error. ");
+            }
         }
+        return channelFuture;
+    }
+
+    public void destroy() {
+        if (null == channel) return;
+        channel.close();
+        parentGroup.shutdownGracefully();
+        childGroup.shutdownGracefully();
+    }
+
+    public Channel getChannel() {
+        return channel;
     }
 }

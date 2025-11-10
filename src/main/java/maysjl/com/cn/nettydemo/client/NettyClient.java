@@ -1,6 +1,7 @@
 package maysjl.com.cn.nettydemo.client;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -16,32 +17,36 @@ import maysjl.com.cn.nettydemo.util.MsgUtil;
  * @create: 2025-11-06 12:03
  **/
 public class NettyClient {
-    public static void main(String[] args) {
-        new NettyClient().connect("127.0.0.1", 7397);
-    }
-
-    private void connect(String inetHost, int inetPort) {
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+    //配置服务端NIO线程组
+    private EventLoopGroup workerGroup = new NioEventLoopGroup();
+    private Channel channel;
+    public  ChannelFuture connect(String inetHost, int inetPort) {
+        ChannelFuture channelFuture = null;
         try {
             Bootstrap b = new Bootstrap();
             b.group(workerGroup);
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.AUTO_READ, true);
             b.handler(new MyChannelInitializer());
-            ChannelFuture f = b.connect(inetHost, inetPort).sync();
-            System.out.println("maysjl.com.cn client start done.");
-
-            f.channel().writeAndFlush(MsgUtil.buildMsg(f.channel().id().toString(),"你好，使用protobuf通信格式的服务端"));
-            f.channel().writeAndFlush(MsgUtil.buildMsg(f.channel().id().toString(),"你好，使用protobuf通信格式的服务端"));
-            f.channel().writeAndFlush(MsgUtil.buildMsg(f.channel().id().toString(),"你好，使用protobuf通信格式的服务端"));
-            f.channel().writeAndFlush(MsgUtil.buildMsg(f.channel().id().toString(),"你好，使用protobuf通信格式的服务端"));
-            f.channel().writeAndFlush(MsgUtil.buildMsg(f.channel().id().toString(),"你好，使用protobuf通信格式的服务端"));
-
-            f.channel().closeFuture().sync();
-        } catch (InterruptedException e) {
+            channelFuture = b.connect(inetHost, inetPort).syncUninterruptibly();
+            this.channel = channelFuture.channel();
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            workerGroup.shutdownGracefully();
+            if (null != channelFuture && channelFuture.isSuccess()){
+                System.out.println("maysjl.com.cn client start done. ");
+            }else {
+                System.out.println("maysjl.com.cn client start error");
+            }
         }
+
+        return channelFuture;
+    }
+
+
+    public void destroy() {
+        if (null == channel) return;
+        channel.close();
+        workerGroup.shutdownGracefully();
     }
 }
