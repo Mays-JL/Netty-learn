@@ -2,10 +2,10 @@ package maysjl.com.cn.nettydemo.server;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
-import maysjl.com.cn.nettydemo.codec.ObjDecoder;
-import maysjl.com.cn.nettydemo.codec.ObjEncoder;
-import maysjl.com.cn.nettydemo.domain.FileTransferProtocol;
-import maysjl.com.cn.nettydemo.domain.MsgInfo;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.stream.ChunkedWriteHandler;
+
 
 /**
  * @program: netty-demo
@@ -16,9 +16,9 @@ import maysjl.com.cn.nettydemo.domain.MsgInfo;
 public class MyChannelInitializer extends ChannelInitializer<SocketChannel> {
     @Override
     protected void initChannel(SocketChannel channel) throws Exception {
-        // 对象传输处理
-        channel.pipeline().addLast(new ObjDecoder(FileTransferProtocol.class));
-        channel.pipeline().addLast(new ObjEncoder(FileTransferProtocol.class));
+        channel.pipeline().addLast("http-codec",new HttpServerCodec());
+        channel.pipeline().addLast("aggregator",new HttpObjectAggregator(65536));
+        channel.pipeline().addLast("http-chunked",new ChunkedWriteHandler());
         //在管道中添加我们自己的接收数据实现方法
         channel.pipeline().addLast(new MyServerHandler());
     }

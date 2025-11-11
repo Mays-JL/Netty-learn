@@ -1,5 +1,7 @@
 package maysjl.com.cn.nettydemo.util;
 
+import com.alibaba.fastjson.JSON;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import maysjl.com.cn.nettydemo.domain.*;
 
 /**
@@ -10,71 +12,24 @@ import maysjl.com.cn.nettydemo.domain.*;
  **/
 public class MsgUtil {
 
-    /**
-     * 构建对象；请求传输文件(客户端)
-     *
-     * @param fileUrl  客户端文件地址
-     * @param fileName 文件名称
-     * @param fileSize 文件大小
-     * @return 传输协议
-     */
-   public static FileTransferProtocol buildRequestTransferFile(String fileUrl, String fileName, Long fileSize){
+    public static TextWebSocketFrame buildMsgAll(String channelId, String msgInfo){
+        // 模拟头像
+        int i = Math.abs(channelId.hashCode()) % 10;
 
-       FileDescInfo fileDescInfo = new FileDescInfo();
-       fileDescInfo.setFileUrl(fileUrl);
-       fileDescInfo.setFileName(fileName);
-       fileDescInfo.setFileSize(fileSize);
+        ServerMsgProtocol msg = new ServerMsgProtocol();
+        msg.setType(2);
+        msg.setChannelId(channelId);
+        msg.setUserHeadImg("head"+i+".jpg");
+        msg.setMsgInfo(msgInfo);
 
-       FileTransferProtocol fileTransferProtocol = new FileTransferProtocol();
-       fileTransferProtocol.setTransferType(0);
-       fileTransferProtocol.setTransferObj(fileDescInfo);
-
-       return fileTransferProtocol;
-   }
-
-    /**
-     * 构建对象；文件传输指令(服务端)
-     * @param status          0请求传输文件、1文件传输指令、2文件传输数据
-     * @param clientFileUrl   客户端文件地址
-     * @param readPosition    读取位置
-     * @return                传输协议
-     */
-    public static FileTransferProtocol buildTransferInstruct(Integer status, String clientFileUrl, Integer readPosition){
-
-        FileBurstInstruct fileBurstInstruct = new FileBurstInstruct();
-        fileBurstInstruct.setStatus(status);
-        fileBurstInstruct.setClientFileUrl(clientFileUrl);
-        fileBurstInstruct.setReadPosition(readPosition);
-
-        FileTransferProtocol fileTransferProtocol = new FileTransferProtocol();
-        fileTransferProtocol.setTransferType(Constants.TransferType.INSTRUCT);
-        fileTransferProtocol.setTransferObj(fileBurstInstruct);
-
-        return fileTransferProtocol;
-    }
-
-    /**
-     * 构建对象；文件传输指令(服务端)
-     *
-     * @return 传输协议
-     */
-    public static FileTransferProtocol buildTransferInstruct(FileBurstInstruct fileBurstInstruct){
-        FileTransferProtocol fileTransferProtocol = new FileTransferProtocol();
-        fileTransferProtocol.setTransferType(Constants.TransferType.INSTRUCT);
-        fileTransferProtocol.setTransferObj(fileBurstInstruct);
-        return fileTransferProtocol;
+        return new TextWebSocketFrame(JSON.toJSONString(msg));
     }
 
 
-    /**
-     * 构建对象；文件传输数据(客户端)
-     *
-     * @return 传输协议
-     */
-    public static FileTransferProtocol buildTransferData(FileBurstData fileBurstData){
-        FileTransferProtocol fileTransferProtocol = new FileTransferProtocol();
-        fileTransferProtocol.setTransferObj(fileBurstData);
-        fileTransferProtocol.setTransferType(Constants.TransferType.DATA);
-        return fileTransferProtocol;
+    public static TextWebSocketFrame buildMsgOwner(String channelId){
+        ServerMsgProtocol msg = new ServerMsgProtocol();
+        msg.setType(1);
+        msg.setChannelId(channelId);
+        return new TextWebSocketFrame(JSON.toJSONString(msg));
     }
 }

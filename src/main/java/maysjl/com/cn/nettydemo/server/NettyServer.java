@@ -7,7 +7,9 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.springframework.stereotype.Component;
 
+import java.net.InetSocketAddress;
 
 
 /**
@@ -16,12 +18,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
  * @author: May's_JL
  * @create: 2025-11-06 10:46
  **/
+@Component("nettyServer")
 public class NettyServer {
 
     private EventLoopGroup parentGroup = new NioEventLoopGroup();
     private EventLoopGroup childGroup = new NioEventLoopGroup();
     private Channel channel;
-    public ChannelFuture bing(int port){
+    public ChannelFuture bing(InetSocketAddress address){
         ChannelFuture channelFuture = null;
         try{
             ServerBootstrap b = new ServerBootstrap();
@@ -29,7 +32,7 @@ public class NettyServer {
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childHandler(new MyChannelInitializer());
-            channelFuture = b.bind(port).syncUninterruptibly();
+            channelFuture = b.bind(address).syncUninterruptibly();
             this.channel = channelFuture.channel();
         }catch (Exception e){
             e.printStackTrace();

@@ -19,8 +19,8 @@ public class NettyClientTest {
 
         //文件信息{文件大于1024kb方便测试断点续传}
         File file = new File("D:\\JAVAPor\\netty-demo\\src\\test\\java\\maysjl\\com\\cn\\nettydemo\\测试传输文件.rar");
-        FileTransferProtocol fileTransferProtocol = MsgUtil.buildRequestTransferFile(file.getAbsolutePath(), file.getName(), file.length());
+        //FileTransferProtocol fileTransferProtocol = MsgUtil.buildRequestTransferFile(file.getAbsolutePath(), file.getName(), file.length());
 
-        channelFuture.channel().writeAndFlush(fileTransferProtocol);
+        //channelFuture.channel().writeAndFlush(fileTransferProtocol);
     }
 }

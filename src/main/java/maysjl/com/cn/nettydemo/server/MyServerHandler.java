@@ -2,11 +2,21 @@ package maysjl.com.cn.nettydemo.server;
 
 
 import com.alibaba.fastjson.JSON;
+import com.sun.org.slf4j.internal.Logger;
+import com.sun.org.slf4j.internal.LoggerFactory;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.websocketx.*;
+import io.netty.util.CharsetUtil;
 import maysjl.com.cn.nettydemo.domain.*;
 import maysjl.com.cn.nettydemo.util.CacheUtil;
+import maysjl.com.cn.nettydemo.util.ChannelHandler;
 import maysjl.com.cn.nettydemo.util.FileUtil;
 import maysjl.com.cn.nettydemo.util.MsgUtil;
 
@@ -22,7 +32,9 @@ import java.util.Date;
  **/
 public class MyServerHandler extends ChannelInboundHandlerAdapter {
 
+    private Logger logger = LoggerFactory.getLogger(MyServerHandler.class);
 
+    private WebSocketServerHandshaker handshaker;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -32,59 +44,90 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
         System.out.println("链接报告IP:" + channel.localAddress().getHostString());
         System.out.println("链接报告Port:" + channel.localAddress().getPort());
         System.out.println("链接报告完毕");
+        ChannelHandler.channelGroup.add(ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("客户端断开链接" + ctx.channel().localAddress().toString());
+        ChannelHandler.channelGroup.remove(ctx.channel());
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-       // 数据格式验证
-        if (!(msg instanceof FileTransferProtocol )) return;
 
-        FileTransferProtocol fileTransferProtocol = (FileTransferProtocol) msg;
-        switch (fileTransferProtocol.getTransferType()){
-            case 0:
-                FileDescInfo fileDescInfo = (FileDescInfo) fileTransferProtocol.getTransferObj();
+        //http
+        if (msg instanceof FullHttpRequest){
 
-                //断点续传信息，实际应用中需要将断点信息保持到数据库中
-                FileBurstInstruct fileBurstInstructOld = CacheUtil.burstDataMap.get(fileDescInfo.getFileName());
-                if (null != fileBurstInstructOld){
-                    if (fileBurstInstructOld.getStatus() == Constants.FileStatus.COMPLETE){
-                        CacheUtil.burstDataMap.remove(fileDescInfo.getFileName());
-                    }
-                    //传输完成删除断点信息
-                    System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " maysjl服务端，接收客户端传输文件请求[断点续传]。" + JSON.toJSONString(fileBurstInstructOld));
-                    ctx.writeAndFlush(MsgUtil.buildTransferInstruct(fileBurstInstructOld));
-                    return;
+            FullHttpRequest httpRequest = (FullHttpRequest) msg;
+
+            if (!httpRequest.decoderResult().isSuccess()){
+
+                DefaultFullHttpResponse httpResponse =  new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST);
+
+                // 返回应答给客户端
+                if (httpResponse.status().code() != 200){
+                    ByteBuf buf = Unpooled.copiedBuffer(httpResponse.status().toString(), CharsetUtil.UTF_8);
+                    httpResponse.content().writeBytes(buf);
+                    buf.release();
                 }
 
-                //发送信息
-                FileTransferProtocol sendFileTransferProtocol = MsgUtil.buildTransferInstruct(Constants.FileStatus.BEGIN, fileDescInfo.getFileUrl(), 0);
-                ctx.writeAndFlush(sendFileTransferProtocol);
-                System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " maysjl服务端，接收客户端传输文件请求。" + JSON.toJSONString(fileDescInfo));
-                break;
-            case 2:
-                FileBurstData fileBurstData = (FileBurstData) fileTransferProtocol.getTransferObj();
-                FileBurstInstruct fileBurstInstruct = FileUtil.writeFile("D://",fileBurstData);
-
-                //保存断点续传信息
-                CacheUtil.burstDataMap.put(fileBurstData.getFileName(), fileBurstInstruct);
-
-                ctx.writeAndFlush(MsgUtil.buildTransferInstruct(fileBurstInstruct));
-                System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "maysjl.com.cn服务端，接收客户端传输文件数据。" + JSON.toJSONString(fileBurstData));
-
-
-                //传输完成删除断点信息
-                if (fileBurstInstruct.getStatus() == Constants.FileStatus.COMPLETE){
-                    CacheUtil.burstDataMap.remove(fileBurstData.getFileName());
+                //如果是非Keep-Alive,关闭连接
+                ChannelFuture f = ctx.channel().writeAndFlush(httpResponse);
+                if (httpResponse.status().code() != 200){
+                    f.addListener(ChannelFutureListener.CLOSE);
                 }
 
-                break;
-            default:
-                break;
+                return;
+            }
+
+            WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory("ws:/" + ctx.channel()+"/wbsocket",null,false);
+            handshaker  = wsFactory.newHandshaker(httpRequest);
+
+            if (null == handshaker){
+                WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
+            }else {
+                handshaker.handshake(ctx.channel(), httpRequest);
+            }
+            return;
+        }
+
+        // ws
+        if (msg instanceof WebSocketFrame){
+
+            WebSocketFrame webSocketFrame = (WebSocketFrame) msg;
+
+            // 关闭请求
+            if (webSocketFrame instanceof CloseWebSocketFrame){
+                handshaker.close(ctx.channel(), (CloseWebSocketFrame) webSocketFrame.retain());
+                return;
+            }
+
+            //ping请求
+            if (webSocketFrame instanceof PingWebSocketFrame){
+                ctx.channel().write(new PongWebSocketFrame(webSocketFrame.content().retain()));
+                return;
+            }
+
+            //只支持文本格式，不支持二进制消息
+            if (!(webSocketFrame instanceof TextWebSocketFrame)){
+                throw new Exception("仅支持文本格式");
+            }
+
+            String request = ((TextWebSocketFrame) webSocketFrame).text();
+            System.out.println("服务端收到： "+request);
+
+            ClientMsgProtocol clientMsgProtocol = JSON.parseObject(request, ClientMsgProtocol.class);
+            //1请求个人信息
+            if (1 == clientMsgProtocol.getType()){
+                ctx.channel().writeAndFlush(MsgUtil.buildMsgOwner(ctx.channel().id().toString()));
+                return;
+            }
+            //群发消息
+            if (2 == clientMsgProtocol.getType()){
+                TextWebSocketFrame textWebSocketFrame = MsgUtil.buildMsgAll(ctx.channel().id().toString(), clientMsgProtocol.getMsgInfo());
+                ChannelHandler.channelGroup.writeAndFlush(textWebSocketFrame);
+            }
         }
     }
 
