@@ -2,6 +2,7 @@ package maysjl.com.cn.leetcode;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Deque;
 
 /**
@@ -15,6 +16,14 @@ public class main {
 
     }
 
-
+    public int findRepeatDocument(int[] documents) {
+        Arrays.sort(documents);
+        for (int i = 0 ; i < documents.length - 1; i ++ ){
+            if (documents[i] == documents[i+ 1]){
+                return documents[i];
+            }
+        }
+        return  -1;
+    }
 
 }
