@@ -1,4 +1,4 @@
-package cn.bugstack.gateway;
+package cn.bugstack.gateway.session;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -16,16 +16,24 @@ import java.util.concurrent.Callable;
 
 /**
  * @program: netty-demo
- * @description:
+ * @description: 网关会话服务
  * @author: May's_JL
  * @create: 2025-11-10 20:40
  **/
 public class SessionServer implements Callable<Channel> {
 
     private final Logger logger = LoggerFactory.getLogger(SessionServer.class);
+
+    private Configuration configuration;
+
     private final EventLoopGroup boss = new NioEventLoopGroup(1);
     private final EventLoopGroup work = new NioEventLoopGroup();
     private Channel channel;
+
+    public SessionServer(Configuration configuration) {
+        this.configuration = configuration;
+    }
+
     @Override
     public Channel call() throws Exception {
         ChannelFuture channelFuture = null;
@@ -34,12 +42,12 @@ public class SessionServer implements Callable<Channel> {
             b.group(boss, work)
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 128)
-                    .childHandler(new SessionChannelInitializer());
+                    .childHandler(new SessionChannelInitializer(configuration));
 
             channelFuture = b.bind(new InetSocketAddress(7397)).syncUninterruptibly();
             this.channel = channelFuture.channel();
         }catch (Exception e){
-            e.printStackTrace();
+            logger.error("socket server start error.",e);
         }finally {
             if (null != channelFuture && channelFuture.isSuccess()){
                 logger.info("socket server start done.");
