@@ -10,23 +10,11 @@ import java.sql.SQLOutput;
  **/
 public class UserService {
 
-    private String name;
+    private String uId;
 
-    public UserService() {
-    }
+    private UserDao userDao;
 
-    public UserService(String name) {
-        this.name = name;
-    }
-
-    public void queryUserInfo() {
-        System.out.println("查询用户信息：" + name);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("");
-        sb.append("").append(name);
-        return sb.toString();
+    public void queryUserInfo(){
+        System.out.println("查询用户信息： "+ userDao.queryUserName(uId));
     }
 }

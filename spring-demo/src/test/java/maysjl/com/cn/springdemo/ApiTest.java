@@ -1,8 +1,10 @@
 package maysjl.com.cn.springdemo;
 
 
+import maysjl.com.cn.springdemo.bean.UserDao;
 import maysjl.com.cn.springdemo.bean.UserService;
 import maysjl.com.cn.springdemo.factory.config.BeanDefinition;
+import maysjl.com.cn.springdemo.factory.config.BeanReference;
 import maysjl.com.cn.springdemo.factory.support.DefaultListableBeanFactory;
 import org.junit.Test;
 import org.springframework.cglib.proxy.Enhancer;
@@ -24,12 +26,20 @@ public class ApiTest {
         // 1.初始化 BeanFactory
         DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
 
-        // 3. 注入bean
-        BeanDefinition beanDefinition = new BeanDefinition(UserService.class);
+        // 2. UserDao 注册
+        beanFactory.registerBeanDefinition("userDao", new BeanDefinition(UserDao.class));
+
+        // 3. UserService 设置属性【uid、userDao】
+        PropertyValues propertyValues = new PropertyValues();
+        propertyValues.addPropertyValue(new PropertyValue("uId","10001"));
+        propertyValues.addPropertyValue(new PropertyValue("userDao",new BeanReference("userDao")));
+
+        // 4.UserService 注入bean
+        BeanDefinition beanDefinition = new BeanDefinition(UserService.class, propertyValues);
         beanFactory.registerBeanDefinition("userService", beanDefinition);
 
-        // 4.获取bean
-        UserService userService = (UserService) beanFactory.getBean("userService", "小傅哥");
+        // 5. UserService 获取bean
+        UserService userService = (UserService) beanFactory.getBean("userService");
         userService.queryUserInfo();
     }
 

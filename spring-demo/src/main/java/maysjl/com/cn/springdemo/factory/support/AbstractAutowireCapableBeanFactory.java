@@ -1,7 +1,11 @@
 package maysjl.com.cn.springdemo.factory.support;
 
 import maysjl.com.cn.springdemo.BeansException;
+import maysjl.com.cn.springdemo.PropertyValue;
+import maysjl.com.cn.springdemo.PropertyValues;
 import maysjl.com.cn.springdemo.factory.config.BeanDefinition;
+import maysjl.com.cn.springdemo.factory.config.BeanReference;
+import cn.hutool.core.bean.BeanUtil;
 
 import java.lang.reflect.Constructor;
 
@@ -20,12 +24,41 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         Object bean = null;
         try{
             bean = createBeanInstance(beanDefinition, beanName, args);
+            // 给Bean填充属性
+            applyPropertyValues(beanName, bean, beanDefinition);
         }catch (Exception e){
             throw new BeansException("Instantiation of bean failed",e);
         }
 
         addSingleton(beanName, bean);
         return bean;
+    }
+
+    /**
+     *  Bean 属性填充
+     * @param beanName
+     * @param bean
+     * @param beanDefinition
+     */
+    private void applyPropertyValues(String beanName, Object bean, BeanDefinition beanDefinition) {
+        try{
+            PropertyValues propertyValues = beanDefinition.getPropertyValues();
+            for (PropertyValue propertyValue : propertyValues.getPropertyValues()){
+
+                String name = propertyValue.getName();
+                Object value = propertyValue.getValue();
+
+                if ( value instanceof BeanReference){
+                    // A  依赖 B， 获取B的实例
+                    BeanReference beanReference = (BeanReference) value;
+                    value = getBean(beanReference.getBeanName());
+                }
+                // 属性填充
+                BeanUtil.setFieldValue(bean, name, value);
+            }
+        }catch (Exception e){
+            throw new BeansException("Error setting property values: "+beanName);
+        }
     }
 
     protected Object createBeanInstance(BeanDefinition beanDefinition, String beanName, Object[] args) {
